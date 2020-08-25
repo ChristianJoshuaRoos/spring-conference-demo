@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 public class SpeakerTest {
     @Autowired
-    private SpeakerJpaRepository repository;
+    private SpeakerJpaRepository jpaRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Test
     public void testFind() throws Exception {
-        Speaker speaker = repository.getOne(1L);
+        Speaker speaker = jpaRepository.getOne(1L);
         assertNotNull(speaker);
     }
 
@@ -37,28 +38,77 @@ public class SpeakerTest {
         s.setLastName("Bunker");
         s.setTitle("Author");
         s.setSpeakerBio("Consulting and mentoring");
-        s = repository.saveAndFlush(s);
+        s = jpaRepository.saveAndFlush(s);
 
         // clear the persistence context so we don't return the previously cached location object
         // this is a test only thing and normally doesn't need to be done in prod code
         entityManager.clear();
 
-        Speaker otherSpeaker = repository.getOne(s.getSpeakerId());
+        Speaker otherSpeaker = jpaRepository.getOne(s.getSpeakerId());
         assertEquals("Dan", otherSpeaker.getFirstName());
 
-        repository.deleteById(otherSpeaker.getSpeakerId());
+        jpaRepository.deleteById(otherSpeaker.getSpeakerId());
     }
 
     @Test
-    public void testJpaAnd(){
-        List<Speaker> speakers = repository.findByFirstNameAndLastName("Justin", "Clark");
+    public void testJpaAnd() throws Exception{
+        List<Speaker> speakers = jpaRepository.findByFirstNameAndLastName("Justin", "Clark");
         assertTrue(speakers.size() > 0);
     }
 
     @Test
-    public void testJpaOr(){
-        List<Speaker> speakers = repository.findByFirstNameOrLastName("Justin", "Clark");
+    public void testJpaOr() throws Exception{
+        List<Speaker> speakers = jpaRepository.findByFirstNameOrLastName("Justin", "Clark");
         assertTrue(speakers.size() > 0);
+    }
+
+    @Test
+    public void testJpaNull() throws Exception{
+        List<Speaker> speakers = jpaRepository.findBySpeakerPhotoNull();
+        assertTrue(speakers.size() > 0);
+    }
+
+    @Test
+    public void testJpaIn() throws Exception{
+        List<String> companies = new ArrayList<String>();
+        companies.add("National Bank");
+        companies.add("Contoso");
+        List<Speaker> speakers = jpaRepository.findByCompanyIn(companies);
+        assertTrue(speakers.size() > 0);
+    }
+
+    @Test
+    public void testJpaIgnoreCase() throws Exception{
+        List<Speaker> speakers = jpaRepository.findByCompanyIgnoreCase("national bank");
+
+        for (Speaker speaker : speakers){
+            System.out.print(speaker.getFirstName() + " ");
+            System.out.println(speaker.getLastName());
+        }
+
+        assertTrue(speakers.size() > 0);
+    }
+
+    @Test
+    public void testJpaOrderBy() throws Exception{
+        List<Speaker> speakers = jpaRepository.findByLastNameOrderByFirstNameAsc("Perry");
+
+        for (Speaker speaker : speakers){
+            System.out.print(speaker.getFirstName() + " ");
+            System.out.println(speaker.getLastName());
+        }
+
+        assertTrue(speakers.size() > 0);
+    }
+
+    @Test
+    public void testJpaFirst() throws Exception{
+        Speaker speaker = jpaRepository.findFirstByFirstName("James");
+
+        System.out.print(speaker.getFirstName() + " ");
+        System.out.println(speaker.getLastName());
+
+        assertTrue(speaker.getFirstName().equals("James"));
     }
 
 }
