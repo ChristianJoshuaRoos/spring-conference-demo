@@ -64,4 +64,10 @@ public class SessionTest {
         assertTrue(page.getTotalElements() > 0);
     }
 
+    @Test
+    public void testCustomImpl() throws Exception{
+        List<Session> sessions = jpaRepository.customGetSessions();
+        assertTrue(sessions.size() > 0);
+    }
+
 }
